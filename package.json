@@ -1,0 +1,15 @@
+{
+  "name": "festive-well-wishes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test",
+    "db:migrate:local": "wrangler d1 migrations apply festive-well-wishes --local --force",
+    "db:migrate:remote": "wrangler d1 migrations apply festive-well-wishes --remote --force",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.166.0"
+  }
+}

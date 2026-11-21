@@ -16,6 +16,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; scroll-padding-top: 85px; }
 body { margin: 0; color: var(--ink); background: var(--cream); font-family: var(--sans); font-size: 15px; line-height: 1.65; }
 button, input, select, textarea { font: inherit; }
@@ -160,7 +161,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-label { color: #e2ca8d; font-size: 8px; font-weight: 700; letter-spacing: 2.1px; }
 .card-inner h1 { margin: 17px 0 8px; color: #fffaf0; font-family: var(--serif); font-size: clamp(35px, 6vw, 53px); font-weight: 500; line-height: 1.16; }
 .card-divider { margin: 8px 0 13px; color: #e2ca8d; font-size: 12px; }
-.card-wish { max-width: 460px; margin: 0; color: #e2e8de; font-family: var(--serif); font-size: 16px; line-height: 1.8; }
+.card-wish { max-width: 460px; margin: 0; color: #e2e8de; font-family: var(--serif); font-size: 16px; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
 .card-inner blockquote { max-width: 470px; margin: 15px 0 0; color: #f0dda9; font-family: var(--serif); font-size: 14px; font-style: italic; line-height: 1.7; }
 .card-signoff { margin: 24px 0 0; color: #cbd6c9; font-size: 10px; }
 .card-sender { margin: 2px 0 0; color: #f0dda9; font-family: var(--serif); font-size: 23px; }
@@ -349,6 +350,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .countdown-units > i { padding-top: 2px; color: #c39b60; font-size: 16px; font-style: normal; }
 
 .home-theme .create-section { max-width: none; padding: 82px max(24px, calc((100% - 1058px) / 2)) 94px; background: #faf6ed; color: var(--ink); }
+.parent-context { margin: 10px 0 0 !important; color: #536f59 !important; font-size: 11px !important; }
 .home-theme .create-section .section-heading h2 { color: var(--green-950); }
 .home-theme .music-section { border-color: #f1d8976b; background: #751523; color: #fffaf0; }
 .home-theme .music-intro h2 { color: #fffaf0; }

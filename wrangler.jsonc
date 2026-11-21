@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "festive-well-wishes",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-21",
+  "assets": {
+    "directory": "./static",
+    "binding": "ASSETS",
+    "run_worker_first": ["/"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "festive-well-wishes",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

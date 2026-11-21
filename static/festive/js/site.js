@@ -1,6 +1,72 @@
 (() => {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  const greetingForm = document.querySelector("[data-greeting-form]");
+  if (greetingForm) {
+    const formError = greetingForm.querySelector("[data-form-error]");
+    const parentContext = document.querySelector("[data-parent-context]");
+    const parentTokenField = greetingForm.querySelector("[data-parent-token]");
+    const submitButton = greetingForm.querySelector("[data-submit-button]");
+
+    function clearFormErrors() {
+      formError.hidden = true;
+      formError.textContent = "";
+      greetingForm.querySelectorAll("[data-field-error]").forEach((item) => {
+        item.textContent = "";
+      });
+    }
+
+    const parentToken = new URLSearchParams(window.location.search).get("from");
+    if (parentToken) {
+      parentTokenField.value = parentToken;
+      fetch(`/api/greetings/${encodeURIComponent(parentToken)}`)
+        .then(async (response) => {
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "That greeting could not be found.");
+          parentContext.textContent = `Inspired by a greeting from ${result.sender_name}. Make this one entirely your own.`;
+          parentContext.hidden = false;
+          greetingForm.elements.occasion.value = result.occasion;
+        })
+        .catch((error) => {
+          parentContext.textContent = error.message;
+          parentContext.hidden = false;
+        });
+    }
+
+    greetingForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearFormErrors();
+      submitButton.disabled = true;
+      const originalLabel = submitButton.innerHTML;
+      submitButton.textContent = "CREATING YOUR GREETING…";
+
+      try {
+        const response = await fetch(greetingForm.action, {
+          method: "POST",
+          body: new FormData(greetingForm),
+          headers: { Accept: "application/json" },
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          if (result.errors) {
+            Object.entries(result.errors).forEach(([name, message]) => {
+              const error = greetingForm.querySelector(`[data-field-error="${name}"]`);
+              if (error) error.textContent = message;
+            });
+          }
+          throw new Error(result.error || "Please check the form and try again.");
+        }
+        window.location.assign(result.url);
+      } catch (error) {
+        formError.textContent = error.message || "Your greeting could not be created. Please try again.";
+        formError.hidden = false;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalLabel;
+      }
+    });
+  }
+
   const clock = document.querySelector("[data-local-clock]");
   const countdowns = document.querySelectorAll("[data-countdown]");
 
