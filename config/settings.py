@@ -71,16 +71,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-PYTHONANYWHERE_SITE = os.environ.get("PYTHONANYWHERE_SITE", "False").lower() in {
-    "1",
-    "true",
-    "yes",
-}
-if not DATABASE_URL and not DEBUG and not PYTHONANYWHERE_SITE:
-    raise RuntimeError(
-        "Set DATABASE_URL to PostgreSQL, or set PYTHONANYWHERE_SITE=True "
-        "to use PythonAnywhere's persistent SQLite storage."
-    )
+if not DATABASE_URL and not DEBUG:
+    raise RuntimeError("Set DATABASE_URL to a persistent PostgreSQL database in production.")
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(

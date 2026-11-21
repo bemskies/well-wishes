@@ -4,7 +4,7 @@ A mobile-friendly Django website for creating, sharing, and passing on personali
 
 ## Features
 
-- Django 5.2 application with SQLite for local development and PythonAnywhere's persistent SQLite storage; other production hosts can use PostgreSQL through `DATABASE_URL`.
+- Django 5.2 application with SQLite for local development and PostgreSQL through `DATABASE_URL` in production.
 - Separate greeting records, URL-safe random tokens, a database uniqueness constraint, indexed creation dates, and a parent/child relationship.
 - Server-validated forms with a required recipient name and required, user-written well-wishing message, CSRF protection, and Django admin.
 - Individual server-rendered greeting cards with Open Graph and Twitter Card metadata.
@@ -65,62 +65,54 @@ Social platforms cache link previews. After deploying a change, use the platform
 
 ## Deployment
 
-### Free hobby deployment (PythonAnywhere)
+### Low-traffic deployment (Google Cloud Run + Neon)
 
-PythonAnywhere's free Beginner account includes one public web app at `yourusername.pythonanywhere.com`, free HTTPS, a persistent home directory, 512 MB disk space, and limited daily CPU. This project can use SQLite there, so a separate paid database is not required. The free account has restricted outbound internet; this app does not need server-side access to YouTube because the music video is embedded in each visitor's browser.
+The app is containerized for [Google Cloud Run](https://cloud.google.com/run), with [Neon Free](https://neon.com/pricing) providing persistent PostgreSQL storage. Cloud Run's free usage allowance includes, in `us-central1`, 2 million requests and monthly CPU/RAM quotas; Neon Free currently includes 100 compute-hours and 1 GB of storage per project. Both services can scale to zero, so the first visit after inactivity may be slow. This is a low-traffic hobby setup, not an always-on or production availability guarantee.
 
-1. Create a free [PythonAnywhere Beginner account](https://www.pythonanywhere.com/registration/register/beginner/). In the **Web** tab, create a **Manual configuration** web app using Python 3.11 or newer.
-2. In a Bash console, clone this public repository and create a virtual environment:
+**Billing warning:** Cloud Run requires a Google Cloud billing account. Usage within its free allowance is not charged, but usage beyond the allowance, other Google Cloud services, or unexpected traffic can incur charges. Set a budget alert and review the current [Cloud Run pricing](https://cloud.google.com/run/pricing) and [Neon pricing](https://neon.com/pricing) before deploying; budget alerts are notifications, not a hard spending cap.
 
-   ```bash
-   git clone https://github.com/bemskies/well-wishes.git
-   cd well-wishes
-   mkvirtualenv --python=/usr/bin/python3.11 well-wishes
-   pip install -r requirements.txt
-   ```
-
-3. Create a private `.env` file in the project root (replace `yourusername` with your actual PythonAnywhere username). Generate a secret with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`, then add:
-
-   ```dotenv
-   DJANGO_SECRET_KEY=your-generated-secret
-   DJANGO_DEBUG=False
-   DJANGO_ALLOWED_HOSTS=yourusername.pythonanywhere.com
-   DJANGO_CSRF_TRUSTED_ORIGINS=https://yourusername.pythonanywhere.com
-   PYTHONANYWHERE_SITE=True
-   ```
-
-   Keep `.env` private; it is excluded from Git. Restrict its permissions with `chmod 600 .env`. `PYTHONANYWHERE_SITE=True` selects SQLite at `db.sqlite3` inside the persistent project directory. Production settings refuse to silently use SQLite on other hosts.
-
-4. Configure the PythonAnywhere web app's virtualenv to `~/.virtualenvs/well-wishes`. Set its source/working directory to `/home/yourusername/well-wishes`.
-5. In the PythonAnywhere WSGI configuration file, replace the contents with this (update the username):
-
-   ```python
-   import os
-   import sys
-
-   project_path = "/home/yourusername/well-wishes"
-   if project_path not in sys.path:
-       sys.path.insert(0, project_path)
-   os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-
-   from django.core.wsgi import get_wsgi_application
-   application = get_wsgi_application()
-   ```
-
-6. In the Bash console, activate the virtualenv, then run:
+1. Create a Google Cloud project, attach a billing account, install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), and authenticate:
 
    ```bash
-   cd ~/well-wishes
-   workon well-wishes
-   python manage.py migrate
-   python manage.py collectstatic --noinput
+   gcloud auth login
+   gcloud config set project YOUR_PROJECT_ID
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
    ```
 
-7. In the Web tab's **Static files** section, map URL `/static/` to `/home/yourusername/well-wishes/staticfiles`, then click **Reload** and open your `yourusername.pythonanywhere.com` address.
+2. Create a free Neon project and database. Copy its pooled PostgreSQL connection string. In Google Cloud Console, open **Security → Secret Manager** and create secrets named `DATABASE_URL` and `DJANGO_SECRET_KEY`. Store the Neon connection string in the first; generate the second locally with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. Do not put either value in source control or in shell command arguments.
+3. Give the default Cloud Run runtime identity access to both secrets. Get the project number with `gcloud projects describe YOUR_PROJECT_ID --format='value(projectNumber)'`; the default identity is `PROJECT_NUMBER-compute@developer.gserviceaccount.com`. Grant it access to each secret:
 
-The free tier's 512 MB disk and CPU quota are suitable for a small hobby site, not a guarantee of production capacity or high availability. Keep backups of `db.sqlite3`; the site uses one SQLite database file in the account's persistent storage. See [PythonAnywhere free account details](https://www.pythonanywhere.com/pricing/) and [Django deployment instructions](https://help.pythonanywhere.com/pages/DeployExistingDjangoProject/).
+   ```bash
+   gcloud secrets add-iam-policy-binding DATABASE_URL \
+     --member=serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com \
+     --role=roles/secretmanager.secretAccessor
+   gcloud secrets add-iam-policy-binding DJANGO_SECRET_KEY \
+     --member=serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com \
+     --role=roles/secretmanager.secretAccessor
+   ```
 
-`SECURE_SSL_REDIRECT` defaults to enabled in production and can be set to `False` only when HTTPS termination is not yet available. Set `SECURE_HSTS_SECONDS` only after confirming HTTPS works reliably for the domain and its subdomains.
+   Use the secrets as runtime environment variables named `DATABASE_URL` and `DJANGO_SECRET_KEY`.
+4. From the repository root, deploy the source. The Dockerfile collects static assets during image build and runs database migrations when a container starts:
+
+   ```bash
+   gcloud run deploy festive-well-wishes \
+     --source . \
+     --region us-central1 \
+     --allow-unauthenticated \
+     --max 1 \
+     --memory 512Mi \
+     --cpu 1 \
+     --set-env-vars="DJANGO_DEBUG=False,DJANGO_ALLOWED_HOSTS=.run.app,DJANGO_CSRF_TRUSTED_ORIGINS=https://*.run.app" \
+     --set-secrets DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest,DATABASE_URL=DATABASE_URL:latest
+   ```
+
+   If prompted, allow Google Cloud to enable required APIs or create an Artifact Registry repository. The initial host entries permit Cloud Run's generated URL; immediately after deployment, replace `.run.app` and `https://*.run.app` with the exact service hostname and HTTPS origin shown by `gcloud run services describe festive-well-wishes --region us-central1 --format='value(status.url)'`. Set them in Cloud Run's **Edit and deploy new revision → Variables & Secrets** page and redeploy.
+
+5. Open the service URL from the command output. Verify the homepage, create a greeting, and open its unique link. On the first cold start, connecting to the sleeping Neon database can take longer than usual.
+
+The `--max 1` setting limits Cloud Run scaling and helps keep compute and database use predictable; it also limits capacity. The app database lives in Neon, not on Cloud Run's temporary container filesystem. See [Cloud Run source deployment documentation](https://cloud.google.com/run/docs/deploying-source-code) and [Neon's free plan limits](https://neon.com/pricing).
+
+`SECURE_SSL_REDIRECT` defaults to enabled in production. Cloud Run terminates HTTPS and forwards the original scheme so Django's secure-cookie and HTTPS settings work behind its proxy.
 
 ## Project layout
 
@@ -128,6 +120,8 @@ The free tier's 512 MB disk and CPU quota are suitable for a small hobby site, n
 config/                       Django settings, root URLs, and WSGI
 festive/                      Greeting model, form, views, admin, and tests
 festive/migrations/           Database schema migrations
+Dockerfile                    Cloud Run container build and start command
+.dockerignore                 Excludes local and secret files from container builds
 static/festive/css/            Responsive design and animation styles
 static/festive/images/         Social card artwork and favicon
 static/festive/js/             Music, sharing, and snowfall interactions
