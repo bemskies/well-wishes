@@ -1,0 +1,41 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10382b">
+  <title>{% block title %}FESTIVE WELL WISHES — Share the wonder{% endblock %}</title>
+  <meta name="description" content="{% block description %}Create a beautiful personal Christmas and New Year greeting, then pass the joy along.{% endblock %}">
+  {% block social_meta %}{% endblock %}
+  <link rel="icon" href="{% static 'festive/images/snowflake.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'festive/css/site.css' %}">
+  <script defer src="{% static 'festive/js/site.js' %}"></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <canvas class="snow-canvas" aria-hidden="true"></canvas>
+  <div class="page-shell">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="{% url 'festive:home' %}" aria-label="Festive Well Wishes home">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span class="brand-words">FESTIVE <b>WELL WISHES</b></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="{% url 'festive:home' %}">Home</a>
+        <a href="{% url 'festive:home' %}#create">Create Greeting</a>
+        <a href="{% url 'festive:home' %}#about">About</a>
+      </nav>
+      <a class="header-cta" href="{% url 'festive:home' %}#create">Make a wish <span aria-hidden="true">↗</span></a>
+    </header>
+    <main id="main-content">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+      <a class="footer-brand" href="{% url 'festive:home' %}">FESTIVE WELL WISHES</a>
+      <span>Made to share a little more joy. <span aria-hidden="true">✦</span></span>
+      <a href="{% url 'festive:home' %}#about">Our festive spirit</a>
+    </footer>
+  </div>
+</body>
+</html>

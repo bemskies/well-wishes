@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Create Your Greeting — FESTIVE WELL WISHES{% endblock %}
+{% block content %}
+<section class="subpage-hero">
+  <span class="season-pill">A NEW WISH BEGINS HERE</span>
+  <h1>Put a little <em>heart</em> into it.</h1>
+  <p>{% if parent %}Inspired by a greeting from {{ parent.sender_name }}. Make this one entirely your own.{% else %}A few details, one heartfelt greeting, and a link ready to share.{% endif %}</p>
+</section>
+<section class="create-section section-wrap create-page-form">
+  <div class="form-card">
+    {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="form-card-heading"><span class="form-step">✦ &nbsp; A GREETING FROM YOU</span><span class="form-card-decoration" aria-hidden="true">❄</span></div>
+    <form method="post" action="{% url 'festive:create' %}{% if parent %}?from={{ parent.unique_token }}{% endif %}" class="greeting-form">
+      {% csrf_token %}
+      {% include "festive/_form_fields.html" %}
+      <button class="button button-green button-full" type="submit">GENERATE MY GREETING <span aria-hidden="true">→</span></button>
+      <p class="form-footnote"><span aria-hidden="true">♡</span> Your details are only used to create your greeting.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

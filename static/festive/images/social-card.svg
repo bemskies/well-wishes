@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">Festive Well Wishes</title>
+  <desc id="description">A joyful Christmas greeting card with evergreen, gold, snow and lights.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#092b22"/>
+      <stop offset="1" stop-color="#174b36"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#d8ae5b" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#d8ae5b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" rx="34" fill="url(#background)"/>
+  <circle cx="1050" cy="150" r="290" fill="url(#glow)"/>
+  <rect x="34" y="34" width="1132" height="562" rx="26" fill="none" stroke="#d8ae5b" stroke-width="2"/>
+  <path d="M75 100h1050" stroke="#d8ae5b" stroke-width="2" stroke-dasharray="2 16" stroke-linecap="round"/>
+  <g fill="#f3ce77">
+    <circle cx="95" cy="100" r="8"/><circle cx="1010" cy="100" r="8"/>
+    <circle cx="210" cy="100" r="5"/><circle cx="1095" cy="100" r="5"/>
+  </g>
+  <text x="600" y="223" fill="#f3ce77" font-family="Georgia,serif" font-size="24" letter-spacing="7" text-anchor="middle">A LITTLE JOY TO SHARE</text>
+  <text x="600" y="320" fill="#fffaf0" font-family="Georgia,serif" font-size="68" text-anchor="middle">Festive Well Wishes</text>
+  <text x="600" y="388" fill="#e9e3d5" font-family="Arial,sans-serif" font-size="27" text-anchor="middle">Make a wish. Share the wonder. Pass the joy along.</text>
+  <text x="600" y="505" fill="#f3ce77" font-family="Georgia,serif" font-size="45" text-anchor="middle">✦  Merry Christmas &amp; Happy New Year  ✦</text>
+</svg>

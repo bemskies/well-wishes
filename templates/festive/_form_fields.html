@@ -1,0 +1,28 @@
+<div class="form-grid">
+  <div class="field-group">
+    <label for="{{ form.sender_name.id_for_label }}">Your name <span aria-hidden="true">*</span></label>
+    {{ form.sender_name }}
+    {% for error in form.sender_name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </div>
+  <div class="field-group">
+    <label for="{{ form.recipient_name.id_for_label }}">Recipient's name <span aria-hidden="true">*</span></label>
+    {{ form.recipient_name }}
+    {% for error in form.recipient_name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </div>
+  <div class="field-group">
+    <label for="{{ form.occasion.id_for_label }}">The occasion</label>
+    {{ form.occasion }}
+    {% for error in form.occasion.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </div>
+  <div class="field-group">
+    <label for="{{ form.greeting_style.id_for_label }}">Your greeting's feeling</label>
+    {{ form.greeting_style }}
+    {% for error in form.greeting_style.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </div>
+  <div class="field-group field-wide">
+    <label for="{{ form.personal_note.id_for_label }}">Your well-wishing message <span aria-hidden="true">*</span></label>
+    {{ form.personal_note }}
+    <span class="field-hint">Write your own message in your own words.</span>
+    {% for error in form.personal_note.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </div>
+</div>
