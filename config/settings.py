@@ -21,10 +21,6 @@ ALLOWED_HOSTS = [
     ).split(",")
     if host.strip()
 ]
-RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
@@ -34,10 +30,6 @@ CSRF_TRUSTED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
-if RENDER_EXTERNAL_HOSTNAME:
-    render_origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
-    if render_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(render_origin)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -79,8 +71,16 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL and not DEBUG:
-    raise RuntimeError("Set DATABASE_URL to a persistent PostgreSQL database in production.")
+PYTHONANYWHERE_SITE = os.environ.get("PYTHONANYWHERE_SITE", "False").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+if not DATABASE_URL and not DEBUG and not PYTHONANYWHERE_SITE:
+    raise RuntimeError(
+        "Set DATABASE_URL to PostgreSQL, or set PYTHONANYWHERE_SITE=True "
+        "to use PythonAnywhere's persistent SQLite storage."
+    )
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(

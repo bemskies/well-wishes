@@ -4,7 +4,7 @@ A mobile-friendly Django website for creating, sharing, and passing on personali
 
 ## Features
 
-- Django 5.2 application with SQLite for local development and PostgreSQL through `DATABASE_URL` in production.
+- Django 5.2 application with SQLite for local development and PythonAnywhere's persistent SQLite storage; other production hosts can use PostgreSQL through `DATABASE_URL`.
 - Separate greeting records, URL-safe random tokens, a database uniqueness constraint, indexed creation dates, and a parent/child relationship.
 - Server-validated forms with a required recipient name and required, user-written well-wishing message, CSRF protection, and Django admin.
 - Individual server-rendered greeting cards with Open Graph and Twitter Card metadata.
@@ -65,20 +65,60 @@ Social platforms cache link previews. After deploying a change, use the platform
 
 ## Deployment
 
-### Free hobby deployment (Render + Neon)
+### Free hobby deployment (PythonAnywhere)
 
-The included [`render.yaml`](./render.yaml) creates a **free Render web service**. For persistent greeting records, pair it with a **Neon Free PostgreSQL** database and set the Render `DATABASE_URL` environment variable to Neon’s connection string. Never commit the connection string or add it to `.env.example`.
+PythonAnywhere's free Beginner account includes one public web app at `yourusername.pythonanywhere.com`, free HTTPS, a persistent home directory, 512 MB disk space, and limited daily CPU. This project can use SQLite there, so a separate paid database is not required. The free account has restricted outbound internet; this app does not need server-side access to YouTube because the music video is embedded in each visitor's browser.
 
-1. Push this repository to GitHub and connect it to Render, then create a Blueprint from the repository. Render generates `DJANGO_SECRET_KEY`; the Blueprint asks for `DATABASE_URL`.
-2. Create a Neon project on its free plan. Choose a region near the Render service and copy the pooled PostgreSQL connection string from Neon.
-3. Paste that URL into the Render Blueprint prompt (or set `DATABASE_URL` in the Render service’s Environment settings), then apply/redeploy the Blueprint. The start command runs migrations before starting Gunicorn.
-4. Open the Render service URL after its deploy finishes. `RENDER_EXTERNAL_HOSTNAME` is automatically allowed for both hosts and CSRF.
+1. Create a free [PythonAnywhere Beginner account](https://www.pythonanywhere.com/registration/register/beginner/). In the **Web** tab, create a **Manual configuration** web app using Python 3.11 or newer.
+2. In a Bash console, clone this public repository and create a virtual environment:
 
-Both plans are free, but have limits: Render free services sleep after 15 minutes idle and can take about a minute to wake; its local filesystem is ephemeral. Neon Free currently includes 1 GB database storage per project, 100 compute-hours per month, and 5 GB public data transfer, and suspends compute after inactivity. This is a hobby/preview configuration, not a production availability or scale guarantee. See the current [Render free plan limits](https://render.com/docs/free) and [Neon plan limits](https://neon.com/docs/introduction/plans) before relying on them.
+   ```bash
+   git clone https://github.com/bemskies/well-wishes.git
+   cd well-wishes
+   mkvirtualenv --python=/usr/bin/python3.11 well-wishes
+   pip install -r requirements.txt
+   ```
 
-The production settings require `DATABASE_URL`, so the service will refuse to start rather than store greetings in ephemeral SQLite if the PostgreSQL URL is missing. For a production launch, use an appropriately backed-up, persistent PostgreSQL plan.
+3. Create a private `.env` file in the project root (replace `yourusername` with your actual PythonAnywhere username). Generate a secret with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`, then add:
 
-For a custom domain, follow Render's DNS setup and enable HTTPS. The app trusts Render's forwarded HTTPS header and enables secure cookies, HTTPS redirects, and HSTS when `DJANGO_DEBUG=False`.
+   ```dotenv
+   DJANGO_SECRET_KEY=your-generated-secret
+   DJANGO_DEBUG=False
+   DJANGO_ALLOWED_HOSTS=yourusername.pythonanywhere.com
+   DJANGO_CSRF_TRUSTED_ORIGINS=https://yourusername.pythonanywhere.com
+   PYTHONANYWHERE_SITE=True
+   ```
+
+   Keep `.env` private; it is excluded from Git. Restrict its permissions with `chmod 600 .env`. `PYTHONANYWHERE_SITE=True` selects SQLite at `db.sqlite3` inside the persistent project directory. Production settings refuse to silently use SQLite on other hosts.
+
+4. Configure the PythonAnywhere web app's virtualenv to `~/.virtualenvs/well-wishes`. Set its source/working directory to `/home/yourusername/well-wishes`.
+5. In the PythonAnywhere WSGI configuration file, replace the contents with this (update the username):
+
+   ```python
+   import os
+   import sys
+
+   project_path = "/home/yourusername/well-wishes"
+   if project_path not in sys.path:
+       sys.path.insert(0, project_path)
+   os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
+   from django.core.wsgi import get_wsgi_application
+   application = get_wsgi_application()
+   ```
+
+6. In the Bash console, activate the virtualenv, then run:
+
+   ```bash
+   cd ~/well-wishes
+   workon well-wishes
+   python manage.py migrate
+   python manage.py collectstatic --noinput
+   ```
+
+7. In the Web tab's **Static files** section, map URL `/static/` to `/home/yourusername/well-wishes/staticfiles`, then click **Reload** and open your `yourusername.pythonanywhere.com` address.
+
+The free tier's 512 MB disk and CPU quota are suitable for a small hobby site, not a guarantee of production capacity or high availability. Keep backups of `db.sqlite3`; the site uses one SQLite database file in the account's persistent storage. See [PythonAnywhere free account details](https://www.pythonanywhere.com/pricing/) and [Django deployment instructions](https://help.pythonanywhere.com/pages/DeployExistingDjangoProject/).
 
 `SECURE_SSL_REDIRECT` defaults to enabled in production and can be set to `False` only when HTTPS termination is not yet available. Set `SECURE_HSTS_SECONDS` only after confirming HTTPS works reliably for the domain and its subdomains.
 
@@ -88,7 +128,6 @@ For a custom domain, follow Render's DNS setup and enable HTTPS. The app trusts 
 config/                       Django settings, root URLs, and WSGI
 festive/                      Greeting model, form, views, admin, and tests
 festive/migrations/           Database schema migrations
-render.yaml                   Render free web service Blueprint
 static/festive/css/            Responsive design and animation styles
 static/festive/images/         Social card artwork and favicon
 static/festive/js/             Music, sharing, and snowfall interactions
